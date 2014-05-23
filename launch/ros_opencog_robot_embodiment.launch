@@ -1,0 +1,9 @@
+<launch>
+	<node name="ros_opencog_robot_embodiment" pkg="ros_opencog_robot_embodiment" type="robot_embodiment" respawn="false" output="screen" >
+		<param name="base_agent_id" value="AGI_Robot" />
+		<param name="oac_ip_address" value="158.132.58.216" />
+		<param name="oac_port" value="16312" />
+		<param name="local_ip_address" value="158.132.58.216" />		
+		<param name="local_port" value="12318" />
+	</node>
+</launch>

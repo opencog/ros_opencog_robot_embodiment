@@ -1,0 +1,16 @@
+<launch>
+	<node name="block_generator" pkg="ros_opencog_robot_embodiment" type="block_generator" respawn="false" output="screen" >
+		<param name="x_min" value="-2.0" />
+		<param name="x_max" value="2.0" />
+		<param name="y_min" value="-1.0" />
+		<param name="y_max" value="0.2" />
+		<param name="z_min" value="0.0" />
+		<param name="z_max" value="3.0" />		
+		<param name="voxel_size" value="0.05" />
+		<param name="mean_k" value="50" />
+		<param name="std_dev_mul_thresh" value="1.0" />
+		<param name="cluster_tolerance" value="0.1" />
+		<param name="min_cluster_size" value="5" />
+		<param name="max_cluster_size" value="25000" />
+	</node>
+</launch>
