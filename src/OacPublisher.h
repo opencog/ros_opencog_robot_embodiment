@@ -3,8 +3,11 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-
+#include <ros/console.h>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <ros/package.h>
 
 #include "Constants.h"
 #include "OacMessage.h"
@@ -33,12 +36,12 @@ namespace ros_opencog_robot_embodiment
             void send_finished(boost::shared_ptr<std::string> content);
 
         public:
-            static const int BLOCKS_PER_TRANSMISION = 4096;
+            static const int BLOCKS_PER_TRANSMISION = 100;
             OacPublisher(std::string oac_ip_address, int oac_port);
             ~OacPublisher();
             void start();
             void stop();
-            void publish(OacMessage& message);
+            void publish(OacMessage message);
     };
 }
 

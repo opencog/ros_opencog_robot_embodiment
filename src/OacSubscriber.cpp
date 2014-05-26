@@ -23,6 +23,11 @@ void OacSubscriber::start()
         this->start_accept_handler();
         this->accept_thread = boost::thread(&OacSubscriber::run_accept_service_thread, this);
         this->accept_running = true;
+        ROS_DEBUG("OacSubscriber started.");
+    }
+    else
+    {
+        ROS_WARN("OacSubscriber already started.");
     }
 }
 
@@ -65,6 +70,18 @@ void OacSubscriber::handle_accept(boost::shared_ptr<boost::asio::ip::tcp::socket
                 buffer_type input = buffer.data();
                 std::copy(iterator::begin(input), iterator::end(input), std::back_inserter(data));
 
+                /*std::ofstream file;
+                file.open("/home/cogbot/rosbuild_ws/src/ros_opencog_robot_embodiment/data/oac_output.txt", ios::app);
+
+                if (file.is_open())
+                {
+                    file << data;
+                    file.close();
+                }
+                else
+                {
+                    cout << "Error file not open.";// << path;
+                }*/
 
                 string temp("");
                 temp = data;

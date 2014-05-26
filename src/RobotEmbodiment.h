@@ -9,7 +9,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/GetMap.h>
 #include <vector>
-
+#include <ros/console.h>
 #include <sstream>
 #include "Constants.h"
 #include "OacSubscriber.h"
@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
+#include <unistd.h>
 
 namespace ros_opencog_robot_embodiment
 {
@@ -42,10 +43,8 @@ namespace ros_opencog_robot_embodiment
         bool is_agent_loaded;
         std::stringstream current_msg;
 
-        void login_to_router();
-        void logout_of_router();
-        void load_agent();
-        void unload_agent();
+        void wait_until_agent_loaded();
+        void update_loop();
         bool load_map();
         bool is_command(std::string message);
         bool is_data(std::string message);

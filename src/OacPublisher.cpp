@@ -30,7 +30,11 @@ void OacPublisher::start()
         this->send_socket = new boost::asio::ip::tcp::socket(this->send_service, this->endpoint->protocol());
         this->send_socket->connect(*this->endpoint, ec);
         this->sender_running = true;
-
+        ROS_DEBUG("OacPublisher started.");
+    }
+    else
+    {
+        ROS_WARN("OacPublisher already started.");
     }
 
     this->publish_lock.unlock();
@@ -54,8 +58,10 @@ void OacPublisher::stop()
     this->publish_lock.unlock();
 }
 
-void OacPublisher::publish(OacMessage& message)
+void OacPublisher::publish(OacMessage message)
 {
+    //cout << "hello\n";
+
     this->publish_lock.lock();
 
     if(this->sender_running)
@@ -63,6 +69,25 @@ void OacPublisher::publish(OacMessage& message)
 
         boost::shared_ptr<std::string> content(new string("")); //= boost::make_shared<std::string>(message.get_content());
         content->append(message.get_content());
+        //TODO: write to file
+
+        //std::string path = ros::package::getPath("ros_opencog_robot_embodiment") + "/data/published_data.txt";
+        //cout << "Path: " << path;
+
+        /*std::ofstream file;
+        file.open("/home/cogbot/rosbuild_ws/src/ros_opencog_robot_embodiment/data/embodiment_output.txt", ios::app);
+
+        if (file.is_open())
+        {
+            file << message.get_content();
+            file.close();
+        }
+        else
+        {
+            cout << "Error file not open.";// << path;
+        }*/
+
+
         //cout << "Sending message: " << *(content) << "\n";
         this->send_socket->async_send(boost::asio::buffer(*content), boost::bind(&OacPublisher::send_finished, this, content));
         boost::thread worker(&OacPublisher::run_send_service_thread, this);

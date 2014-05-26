@@ -6,8 +6,12 @@ using namespace std;
 const string Elements::EMBODIMENT_MSG = "oc:embodiment-msg";
 const string Elements::TERRAIN_INFO = "terrain-info";
 const string Elements::TERRAIN_DATA = "terrain-data";
-const string Elements::MAP_INFO = "map-info";
+const string Elements::MAP_NAME = "map-name";
 const string Elements::MAP_PERCEIVED = "finished-first-time-percept-terrian-signal";
+
+
+const string Attributes::XML_VERSION = "1.0";
+const string Attributes::XML_ENCODING = "UTF-8";
 
 const string Attributes::MAP_POS_X = "global-position-x";
 const string Attributes::MAP_POS_Y = "global-position-y";
@@ -19,8 +23,8 @@ const string Attributes::MAP_FLOOR_HEIGHT = "global-floor-height";
 const string Attributes::IS_FIRST_TIME_PERCEPT_WORLD = "is-first-time-percept-world";
 const string Attributes::TIMESTAMP = "timestamp";
 const string Attributes::SCHEMA_LOCATION = "xsi:schemaLocation";
-const string Attributes::XSI = "";
-const string Attributes::OC = "";
+const string Attributes::XSI = "xmlns:xsi";
+const string Attributes::OC = "xmlns:oc";
 const string Attributes::MATERIAL = "material";
 
 const string ActionStatus::DONE = "done";
