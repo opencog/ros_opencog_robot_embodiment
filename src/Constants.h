@@ -9,13 +9,13 @@ namespace ros_opencog_robot_embodiment
 	class Elements
 	{
 		public:
-			static const std::string EMBODIMENT_MSG, TERRAIN_INFO, TERRAIN_DATA, MAP_INFO, MAP_PERCEIVED;
+            static const std::string EMBODIMENT_MSG, TERRAIN_INFO, TERRAIN_DATA, MAP_NAME, MAP_PERCEIVED;
 	};
 	   //TODO: STRUCTURE_OBJECT_TYPE
 	class Attributes
 	{
 		public:
-			static const std::string MATERIAL, MAP_POS_X, MAP_POS_Y, MAP_POS_Z, MAP_WIDTH, MAP_HEIGHT, MAP_LENGTH, MAP_FLOOR_HEIGHT, IS_FIRST_TIME_PERCEPT_WORLD, TIMESTAMP, SCHEMA_LOCATION, XSI, OC;
+            static const std::string XML_VERSION, XML_ENCODING, MATERIAL, MAP_POS_X, MAP_POS_Y, MAP_POS_Z, MAP_WIDTH, MAP_HEIGHT, MAP_LENGTH, MAP_FLOOR_HEIGHT, IS_FIRST_TIME_PERCEPT_WORLD, TIMESTAMP, SCHEMA_LOCATION, XSI, OC;
 	};
 	   
 	class ActionStatus

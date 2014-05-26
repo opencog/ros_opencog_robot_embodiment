@@ -3,8 +3,10 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-
+#include <ros/console.h>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 #include "Constants.h"
 #include "OacMessage.h"
