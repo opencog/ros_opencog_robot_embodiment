@@ -1,0 +1,44 @@
+#include "Constants.h"
+
+using namespace ros_opencog_robot_embodiment;
+using namespace std;
+
+const string Elements::EMBODIMENT_MSG = "oc:embodiment-msg";
+const string Elements::TERRAIN_INFO = "terrain-info";
+const string Elements::TERRAIN_DATA = "terrain-data";
+const string Elements::MAP_INFO = "map-info";
+const string Elements::MAP_PERCEIVED = "finished-first-time-percept-terrian-signal";
+
+const string Attributes::MAP_POS_X = "global-position-x";
+const string Attributes::MAP_POS_Y = "global-position-y";
+const string Attributes::MAP_POS_Z = "global-position-z";
+const string Attributes::MAP_WIDTH = "global-position-offset-x";
+const string Attributes::MAP_HEIGHT = "global-position-offset-z";
+const string Attributes::MAP_LENGTH = "global-position-offset-y";
+const string Attributes::MAP_FLOOR_HEIGHT = "global-floor-height";
+const string Attributes::IS_FIRST_TIME_PERCEPT_WORLD = "is-first-time-percept-world";
+const string Attributes::TIMESTAMP = "timestamp";
+const string Attributes::SCHEMA_LOCATION = "xsi:schemaLocation";
+const string Attributes::XSI = "";
+const string Attributes::OC = "";
+const string Attributes::MATERIAL = "material";
+
+const string ActionStatus::DONE = "done";
+const string ActionStatus::ERROR = "error";
+
+const string ObjectTypes::PET = "pet";
+const string ObjectTypes::AVATAR = "avatar";
+const string ObjectTypes::ORDINARY = "object";
+const string ObjectTypes::STRUCTURE = "structure";
+const string ObjectTypes::BLOCK = "block-entity";
+const string ObjectTypes::UNKNOWN = "unknown";
+
+const string Commands::AVAILABLE_ELEMENT = "AVAILABLE_ELEMENT";
+const string Commands::UNAVAILABLE_ELEMENT = "UNAVAILABLE_ELEMENT";
+const string Commands::START_MESSAGE = "START_MESSAGE";
+const string Commands::SUCCESS_LOAD = "SUCCESS LOAD";
+const string Commands::SUCCESS_UNLOAD = "SUCCESS UNLOAD";
+const string Commands::NO_MORE_MESSAGES = "NO_MORE_MESSAGES";
+
+
+

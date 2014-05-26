@@ -1,0 +1,20 @@
+<package>
+  <description brief="ros_opencog_robot_embodiment">
+
+     ros_opencog_robot_embodiment
+
+  </description>
+  <author>Jamie Diprose</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ros_opencog_robot_embodiment</url>
+  <depend package="std_msgs"/>
+  <depend package="roscpp"/>
+  <depend package="pcl_ros"/>
+  <depend package="nav_msgs"/>
+  
+  <rosdep name="libtinyxml-dev"/>
+  <rosdep name="libxerces-c2-dev"/>
+</package>
+
+
