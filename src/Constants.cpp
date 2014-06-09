@@ -16,9 +16,10 @@ const string Attributes::XML_ENCODING = "UTF-8";
 const string Attributes::MAP_POS_X = "global-position-x";
 const string Attributes::MAP_POS_Y = "global-position-y";
 const string Attributes::MAP_POS_Z = "global-position-z";
-const string Attributes::MAP_WIDTH = "global-position-offset-x";
-const string Attributes::MAP_HEIGHT = "global-position-offset-z";
-const string Attributes::MAP_LENGTH = "global-position-offset-y";
+const string Attributes::MAP_X_AXIS_LENGTH = "global-position-offset-x";
+const string Attributes::MAP_Y_AXIS_LENGTH = "global-position-offset-y";
+const string Attributes::MAP_Z_AXIS_LENGTH = "global-position-offset-z";
+
 const string Attributes::MAP_FLOOR_HEIGHT = "global-floor-height";
 const string Attributes::IS_FIRST_TIME_PERCEPT_WORLD = "is-first-time-percept-world";
 const string Attributes::TIMESTAMP = "timestamp";

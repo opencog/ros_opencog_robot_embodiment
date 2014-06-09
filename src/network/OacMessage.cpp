@@ -1,4 +1,3 @@
-
 #include "OacMessage.h"
 
 #include <iostream>
@@ -9,7 +8,8 @@ using namespace opencog_msgs::pai_msgs;
 using namespace std;
 using namespace boost::archive::iterators;
 using namespace boost;
-
+using namespace actionlib;
+using namespace geometry_msgs;
 
 
 OacMessage::OacMessage(string message)
@@ -22,14 +22,6 @@ string OacMessage::get_content()
     return this->content;
 }
 
-string OacMessage::to_string(bool value)
-{
-    if(value)
-    {
-        return "true";
-    }
-    return "false";
-}
 
 string OacMessage::create_packet(string source, string target, int type, string body)
 {
@@ -48,7 +40,7 @@ string OacMessage::create_packet(string source, string target, int type, string 
 OacMessage OacMessage::unknown_message_1()
 {
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    string time = OacMessage::get_current_timestamp();
+    string time = Util::get_current_timestamp();
 
     string message = "";
     message.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -63,7 +55,7 @@ OacMessage OacMessage::unknown_message_1()
 
 OacMessage OacMessage::unknown_message_2(string avatar_id, string oac_id)
 {
-    string time = OacMessage::get_current_timestamp();
+    string time = Util::get_current_timestamp();
 
     string message = "";
     message.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -86,7 +78,7 @@ OacMessage OacMessage::create_tick_msg(string avatar_id, string oac_id)
 
 OacMessage OacMessage::create_physiological_msg(string avatar_id, string oac_id)
 {
-    string time = OacMessage::get_current_timestamp();
+    string time = Util::get_current_timestamp();
     string phys = "";
     phys.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     phys.append("<oc:embodiment-msg xsi:schemaLocation=\"http://www.opencog.org/brain BrainProxyAxon.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:oc=\"http://www.opencog.org/brain\">\n");
@@ -95,8 +87,8 @@ OacMessage OacMessage::create_physiological_msg(string avatar_id, string oac_id)
     phys.append("<physiology-level name=\"thirst\" value=\"0\" />\n");
     phys.append("<physiology-level name=\"pee_urgency\" value=\"0\" />\n");
     phys.append("<physiology-level name=\"poo_urgency\" value=\"0\" />\n");
-    phys.append("<physiology-level name=\"energy\" value=\"0.68888888888889\" />\n");
-    phys.append("<physiology-level name=\"fitness\" value=\"0.177728019654751\" />\n");
+    phys.append("<physiology-level name=\"energy\" value=\"0.5\" />\n");
+    phys.append("<physiology-level name=\"fitness\" value=\"0.9\" />\n");
     phys.append("</avatar-signal>\n");
     phys.append("</oc:embodiment-msg>\n");
 
@@ -140,7 +132,7 @@ OacMessage OacMessage::create_oac_login_msg(string avatar_id, boost::asio::ip::a
 
 OacMessage OacMessage::create_map_perceived_msg(string avatar_id, string oac_id)
 {
-    string timestamp = OacMessage::get_current_timestamp();
+    string timestamp = Util::get_current_timestamp();
 
     TiXmlDocument doc;
     TiXmlDeclaration* dec = new TiXmlDeclaration(Attributes::XML_VERSION, Attributes::XML_ENCODING, "");
@@ -169,11 +161,11 @@ OacMessage OacMessage::create_map_perceived_msg(string avatar_id, string oac_id)
     return map_perceived_msg;
 }
 
-OacMessage OacMessage::create_map_msg(string avatar_id, string oac_id, string map_name, int map_x, int map_y, int map_z, int map_width, int map_length, int map_height, int floor_height, MapInfoSeq* blocks, bool is_first_time_percept_world)
+OacMessage OacMessage::create_map_msg(string avatar_id, string oac_id, string map_name, int map_x, int map_y, int map_z, int x_axis_length, int y_axis_length, int z_axis_length, int floor_height, MapInfoSeq* blocks, bool is_first_time_percept_world)
 {
-    cout << "BITCH PLEASE\n";
+    //cout << "BITCH PLEASE\n";
 
-    string timestamp = OacMessage::get_current_timestamp();
+    string timestamp = Util::get_current_timestamp();
 
     TiXmlDocument doc; //doc owens all objects linked to it, so no need to delete them
     TiXmlDeclaration* dec = new TiXmlDeclaration(Attributes::XML_VERSION, Attributes::XML_ENCODING, "");
@@ -190,17 +182,17 @@ OacMessage OacMessage::create_map_msg(string avatar_id, string oac_id, string ma
     TiXmlElement* terrain_info = new TiXmlElement(Elements::TERRAIN_INFO);
     terrain_info->SetAttribute(Elements::MAP_NAME, map_name);
     terrain_info->SetAttribute(Attributes::MAP_POS_X, boost::lexical_cast<std::string>(map_x));
-    terrain_info->SetAttribute(Attributes::MAP_POS_Y, boost::lexical_cast<std::string>(map_z));
-    terrain_info->SetAttribute(Attributes::MAP_POS_Z, boost::lexical_cast<std::string>(map_y));
-    terrain_info->SetAttribute(Attributes::MAP_WIDTH, boost::lexical_cast<std::string>(map_width));
-    terrain_info->SetAttribute(Attributes::MAP_HEIGHT, boost::lexical_cast<std::string>(map_height));
-    terrain_info->SetAttribute(Attributes::MAP_LENGTH, boost::lexical_cast<std::string>(map_length));
+    terrain_info->SetAttribute(Attributes::MAP_POS_Y, boost::lexical_cast<std::string>(map_y));
+    terrain_info->SetAttribute(Attributes::MAP_POS_Z, boost::lexical_cast<std::string>(map_z));
+    terrain_info->SetAttribute(Attributes::MAP_X_AXIS_LENGTH, boost::lexical_cast<std::string>(x_axis_length));
+    terrain_info->SetAttribute(Attributes::MAP_Y_AXIS_LENGTH, boost::lexical_cast<std::string>(y_axis_length));
+    terrain_info->SetAttribute(Attributes::MAP_Z_AXIS_LENGTH, boost::lexical_cast<std::string>(z_axis_length));
     terrain_info->SetAttribute(Attributes::MAP_FLOOR_HEIGHT, boost::lexical_cast<std::string>(floor_height));
-    terrain_info->SetAttribute(Attributes::IS_FIRST_TIME_PERCEPT_WORLD, OacMessage::to_string(is_first_time_percept_world));
+    terrain_info->SetAttribute(Attributes::IS_FIRST_TIME_PERCEPT_WORLD, Util::bool_to_string(is_first_time_percept_world));
     terrain_info->SetAttribute(Attributes::TIMESTAMP, timestamp);
     root->LinkEndChild(terrain_info);
 
-    cout << "HELLO\n";
+    //cout << "HELLO\n";
 
     // Create a terrain-data element, and serialise map data with protobuf
     TiXmlElement * terrain_data = new TiXmlElement(Elements::TERRAIN_DATA);
@@ -209,12 +201,6 @@ OacMessage OacMessage::create_map_msg(string avatar_id, string oac_id, string ma
     // Serialize blocks into base 64 string
     string plain_text;
     blocks->SerializeToString(&plain_text);
-
-    /*Base64::encode	(	const XMLByte *const  	inputData,
-    const XMLSize_t 	inputLength,
-    XMLSize_t * 	outputLength,
-    MemoryManager *const  	memMgr = 0
-    )	*/
 
     unsigned int output_length;
     const unsigned int input_length = (unsigned int)plain_text.size();
@@ -248,7 +234,7 @@ OacMessage OacMessage::create_map_msg(string avatar_id, string oac_id, string ma
 
 OacMessage OacMessage::create_fake_terrain(string avatar_id, string oac_id)
 {
-    string timestamp = OacMessage::get_current_timestamp();
+    string timestamp = Util::get_current_timestamp();
     string terrain = "";
     terrain.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     terrain.append("<oc:embodiment-msg xsi:schemaLocation=\"http://www.opencog.org/brain BrainProxyAxon.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:oc=\"http://www.opencog.org/brain\">\n");
@@ -263,17 +249,156 @@ OacMessage OacMessage::create_fake_terrain(string avatar_id, string oac_id)
     return map_msg;
 }
 
-/**
- * Return a current time stamp with a ISO-8601 date time format.
- */
-
-string OacMessage::get_current_timestamp()
+OacMessage OacMessage::create_action_result_msg(string avatar_id, string oac_id, int plan_id, int action_id, ActionType type, SimpleClientGoalState status)
 {
-    using namespace boost::posix_time;
-    ptime t = microsec_clock::local_time();
-    string iso_time = to_iso_extended_string(t); //2014-05-19T08:43:33.099272
-    return iso_time.substr(0, iso_time.size()-3); //2014-05-19T08:43:33.099
+    string timestamp = Util::get_current_timestamp();
+
+    TiXmlDocument doc;
+    TiXmlDeclaration* dec = new TiXmlDeclaration(Attributes::XML_VERSION, Attributes::XML_ENCODING, "");
+    doc.LinkEndChild(dec);
+
+    //Create root embodiment tag
+    TiXmlElement* root = new TiXmlElement(Elements::EMBODIMENT_MSG);
+    root->SetAttribute(Attributes::SCHEMA_LOCATION, "http://www.opencog.org/brain BrainProxyAxon.xsd");
+    root->SetAttribute(Attributes::XSI, "http://www.w3.org/2001/XMLSchema-instance");
+    root->SetAttribute(Attributes::OC, "http://www.opencog.org/brain");
+    doc.LinkEndChild(root);
+
+    TiXmlElement* avatar_signal = new TiXmlElement("avatar-signal");
+    avatar_signal->SetAttribute("id", avatar_id);
+    avatar_signal->SetAttribute("timestamp", timestamp);
+    root->LinkEndChild(avatar_signal);
+
+    TiXmlElement* action = new TiXmlElement("action");
+    action->SetAttribute("plan_id", plan_id);
+    action->SetAttribute("sequence", action_id);
+    action->SetAttribute("name", Util::action_type_to_string(type)); //TODO: convert action type to string
+    action->SetAttribute("status", Util::goal_state_to_str(status)); //TODO: convert bool to status
+    avatar_signal->LinkEndChild(action);
+
+    //Output message content
+    TiXmlPrinter printer;
+    printer.SetIndent("    ");
+    doc.Accept(&printer);
+    string xml = printer.CStr();
+
+    string packet = OacMessage::create_packet(avatar_id, oac_id, MessageType::STRING, xml);
+    OacMessage action_result_msg(packet);
+    return action_result_msg;
 }
+
+OacMessage OacMessage::create_action_plan_result_msg(string avatar_id, string oac_id, int plan_id, SimpleClientGoalState status)
+{
+    string timestamp = Util::get_current_timestamp();
+
+    TiXmlDocument doc;
+    TiXmlDeclaration* dec = new TiXmlDeclaration(Attributes::XML_VERSION, Attributes::XML_ENCODING, "");
+    doc.LinkEndChild(dec);
+
+    //Create root embodiment tag
+    TiXmlElement* root = new TiXmlElement(Elements::EMBODIMENT_MSG);
+    root->SetAttribute(Attributes::SCHEMA_LOCATION, "http://www.opencog.org/brain BrainProxyAxon.xsd");
+    root->SetAttribute(Attributes::XSI, "http://www.w3.org/2001/XMLSchema-instance");
+    root->SetAttribute(Attributes::OC, "http://www.opencog.org/brain");
+    doc.LinkEndChild(root);
+
+    TiXmlElement* avatar_signal = new TiXmlElement("avatar-signal");
+    avatar_signal->SetAttribute("id", avatar_id);
+    avatar_signal->SetAttribute("timestamp", timestamp);
+    root->LinkEndChild(avatar_signal);
+
+    TiXmlElement* action = new TiXmlElement("action");
+    action->SetAttribute("plan_id", plan_id);
+    action->SetAttribute("status", Util::goal_state_to_str(status)); //TODO: convert bool to status
+    avatar_signal->LinkEndChild(action);
+
+    //Output message content
+    TiXmlPrinter printer;
+    printer.SetIndent("    ");
+    doc.Accept(&printer);
+    string xml = printer.CStr();
+
+    string packet = OacMessage::create_packet(avatar_id, oac_id, MessageType::STRING, xml);
+    OacMessage action_result_msg(packet);
+    return action_result_msg;
+}
+
+void OacMessage::set_battery_properties(MapInfo* battery, Point position)
+{
+    OacMessage::set_object_properties(battery, Util::get_id(), ObjectTypes::ORDINARY, position, 1.0, 1.0, 1.0, "object");
+
+    MapInfo_OCProperty* edible_prop = battery->add_properties();
+    edible_prop->set_key("edible");
+    edible_prop->set_value("TRUE");
+
+    MapInfo_OCProperty* pickupable_prop = battery->add_properties();
+    pickupable_prop->set_key("pickupable");
+    pickupable_prop->set_value("TRUE");
+
+    MapInfo_OCProperty* holder = battery->add_properties();
+    holder->set_key("holder");
+    holder->set_value("none");
+
+}
+
+void OacMessage::set_agent_properties(MapInfo* agent, string agent_id, Point position)
+{
+    OacMessage::set_object_properties(agent, agent_id, ObjectTypes::PET, position, 1.0, 1.0, 1.0, "AGI_Robot");
+}
+
+void OacMessage::set_object_properties(MapInfo* object, string id, string type, Point position, float length, float width, float height, string class_name)
+{
+    //string block_name = id;//"BLOCK_" + OacMessage::get_id();
+
+    object->set_id(id);
+    object->set_name(id);
+    object->set_type(type); //ObjectTypes::STRUCTURE
+
+    //MapInfo_Vector3 pos = object->position();
+
+
+    MapInfo_Vector3* pos = object->mutable_position();
+    pos->set_x(position.x);
+    pos->set_y(position.y);
+    pos->set_z(position.z);
+
+    MapInfo_Rotation* rotation = object->mutable_rotation();
+    rotation->set_pitch(0.0);
+    rotation->set_roll(0.0);
+    rotation->set_yaw(0.0);
+
+    object->set_length(length);
+    object->set_width(width);
+    object->set_height(height);
+
+    MapInfo_OCProperty* class_prop = object->add_properties();
+    class_prop->set_key("class");
+    class_prop->set_value(class_name);
+
+    MapInfo_OCProperty* visi_prop = object->add_properties();
+    visi_prop->set_key("visibility-status");
+    visi_prop->set_value("visible");
+
+
+    MapInfo_OCProperty* detector_prop = object->add_properties();
+    detector_prop->set_key("detector");
+    detector_prop->set_value("true");
+
+    MapInfo_OCProperty* material_prop = object->add_properties();
+    material_prop->set_key(Attributes::MATERIAL);
+    material_prop->set_value("");
+}
+
+/*
+
+    NEW_MESSAGE AVATAR_AGI_Robot OAC_AGI_Robot 1 6
+    <?xml version="1.0" encoding="UTF-8"?>
+    <oc:embodiment-msg xsi:schemaLocation="http://www.opencog.org/brain BrainProxyAxon.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:oc="http://www.opencog.org/brain">
+      <avatar-signal id="OAC_AGI_Robot" timestamp="2014-05-26T15:49:28.089">
+        <action plan-id="0" status="done" />
+      </avatar-signal>
+    </oc:embodiment-msg>
+    */
 
 /*string OacMessage::get_id()
 {
