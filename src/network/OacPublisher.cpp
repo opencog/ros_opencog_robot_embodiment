@@ -74,8 +74,8 @@ void OacPublisher::publish(OacMessage message)
         //std::string path = ros::package::getPath("ros_opencog_robot_embodiment") + "/data/published_data.txt";
         //cout << "Path: " << path;
 
-        /*std::ofstream file;
-        file.open("/home/cogbot/rosbuild_ws/src/ros_opencog_robot_embodiment/data/embodiment_output.txt", ios::app);
+        std::ofstream file;
+        file.open("/media/AA32AB9032AB5FD5/opencog_data/embodiment_output.txt", ios::app);
 
         if (file.is_open())
         {
@@ -85,7 +85,7 @@ void OacPublisher::publish(OacMessage message)
         else
         {
             cout << "Error file not open.";// << path;
-        }*/
+        }
 
 
         //cout << "Sending message: " << *(content) << "\n";

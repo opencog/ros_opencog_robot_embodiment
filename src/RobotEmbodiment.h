@@ -12,15 +12,22 @@
 #include <ros/console.h>
 #include <sstream>
 #include "Constants.h"
-#include "OacSubscriber.h"
-#include "OacPublisher.h"
-#include "OacMessage.h"
-#include "opencog_msgs.pai_msgs.pb.h"
-#include "Block.h"
+#include "Util.h"
+#include "network/OacSubscriber.h"
+#include "network/OacPublisher.h"
+#include "network/OacMessage.h"
+#include "actions/ActionPlan.h"
+#include "actions/Action.h"
+#include "entities/Robot.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
+#include <actionlib/client/simple_action_client.h>
 #include <unistd.h>
+#include "entities/Map.h"
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/bind.hpp>
 
 namespace ros_opencog_robot_embodiment
 {
@@ -28,7 +35,6 @@ namespace ros_opencog_robot_embodiment
 	{
 	private:
 		ros::NodeHandle nh;
-		ros::ServiceClient static_map_srv;
         std::string avatar_id;
         std::string oac_id;
 
@@ -39,24 +45,28 @@ namespace ros_opencog_robot_embodiment
         OacSubscriber *oac_sub;
         void oac_subscriber_callback(boost::shared_ptr<std::string> msg);
 
-        bool is_router_available;
         bool is_agent_loaded;
-        std::stringstream current_msg;
+        //std::mutex::lock is_agent_loaded_lock;
+
+        bool action_plan_running;
+        Robot *robot;
+        Map *map;
+
+
 
         void wait_until_agent_loaded();
         void update_loop();
-        bool load_map();
-        bool is_command(std::string message);
-        bool is_data(std::string message);
-        void process_oac_message(std::string message);
-        void process_oac_command(std::string command);
+
+        void oac_loaded_callback(bool oac_loaded);
+        void action_plan_callback(ActionPlan action_plan);
+
 	public:
         static const float TIMEOUT;
         RobotEmbodiment(std::string base_id, std::string oac_ip_address, int oac_port, std::string local_ip_address, int local_port);
         ~RobotEmbodiment();        
 		void start();
         void stop();
-		void send_occupancy_grid(std::string map_name, nav_msgs::OccupancyGrid msg);
+
 	};
 }
 

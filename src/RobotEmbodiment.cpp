@@ -2,9 +2,9 @@
 
 using namespace ros_opencog_robot_embodiment;
 using namespace opencog_msgs::pai_msgs;
+using namespace actionlib;
 using namespace std;
-
-const float RobotEmbodiment::TIMEOUT = 60.0;
+using namespace geometry_msgs;
 
 RobotEmbodiment::RobotEmbodiment(string base_id, string oac_ip_address, int oac_port, string local_ip_address, int local_port)
 {
@@ -15,67 +15,144 @@ RobotEmbodiment::RobotEmbodiment(string base_id, string oac_ip_address, int oac_
     this->local_ip_address = boost::asio::ip::address::from_string(local_ip_address);
     this->local_port = local_port;
 
-    this->oac_sub = new OacSubscriber(this->local_port, boost::bind(&RobotEmbodiment::oac_subscriber_callback, this, _1));
+    this->oac_sub = new OacSubscriber(this->local_port);
+    this->oac_sub->register_oac_loaded_callback(boost::bind(&RobotEmbodiment::oac_loaded_callback, this, _1));
+    this->oac_sub->register_action_plan_callback(boost::bind(&RobotEmbodiment::action_plan_callback, this, _1));
+
     this->oac_pub = new OacPublisher(oac_ip_address, oac_port);
 
-    this->is_router_available = false;
     this->is_agent_loaded = false;
+
+    this->robot = new Robot();
+    this->map = new Map("static_map");
 }
 
 void RobotEmbodiment::start()
 {
-    ROS_DEBUG("STARTING ROBOT EMBODIMENT.");
+    ROS_INFO("STARTING ROBOT EMBODIMENT.");
 
     this->oac_sub->start();
     this->oac_pub->start();
 
     this->oac_pub->publish(OacMessage::create_oac_login_msg(this->avatar_id, this->local_ip_address, this->local_port));
-    ROS_DEBUG("OAC login message sent.");
+    ROS_INFO("OAC login message sent.");
+
+
 
     this->oac_pub->publish(OacMessage::create_load_agent_msg(this->avatar_id, this->oac_id, "SPAWNER"));
-    ROS_DEBUG("Agent load message sent.");
+    ROS_INFO("Agent load message sent.");
 
     this->wait_until_agent_loaded();
 
+
+
     this->oac_pub->publish(OacMessage::unknown_message_1());
-    ROS_DEBUG("Unknown message 1 sent.");
+    ROS_INFO("Unknown message 1 sent.");
 
     this->oac_pub->publish(OacMessage::unknown_message_2(this->avatar_id, this->oac_id));
-    ROS_DEBUG("Unknown message 2 sent.");
+    ROS_INFO("Unknown message 2 sent.");
 
-    sleep(5.0);
+     ROS_INFO("Sending map.");
+
+     sleep(1.0);
 
     //send map
     //this->oac_pub->publish(OacMessage::create_fake_terrain(this->avatar_id, this->oac_id));
-    this->load_map();
-    ROS_DEBUG("Map message sent.");
+    //this->oac_pub->publish(OacMessage::create_map_perceived_msg(avatar_id, oac_id));
+    this->map->get_load_oac_map_msgs(this->oac_pub, this->avatar_id, this->oac_id);
 
-    sleep(5.0);
-
-    //boost::thread(&RobotEmbodiment::update_loop, this); //Start update loop
-
-    ROS_DEBUG("Sleeping for 5 seconds.");
+     boost::thread(&RobotEmbodiment::update_loop, this); //Start update loop
 
 
+    ROS_INFO("Map message sent.");
+
+        sleep(5.0);
+
+    MapInfoSeq objects;
+
+    MapInfo* agent = objects.add_mapinfos();
+    Point agent_pos;
+    agent_pos.x = 0;
+    agent_pos.y = 0;
+    agent_pos.z = 0;
+    OacMessage::set_agent_properties(agent, this->avatar_id, agent_pos);
+
+    MapInfo* battery = objects.add_mapinfos();
+    Point battery_pos;
+    battery_pos.x = 20;
+    battery_pos.y = 20;
+    battery_pos.z = 0;
+    OacMessage::set_battery_properties(battery, battery_pos);
+
+    this->oac_pub->publish(OacMessage::create_map_msg(this->avatar_id, this->oac_id, this->map->get_name(), this->map->get_origin().x, this->map->get_origin().y, this->map->get_origin().z, this->map->get_x_axis_length(), this->map->get_y_axis_length(), this->map->get_z_axis_length(), this->map->get_floor_height(), &objects, false));
 
 
-    ROS_DEBUG("ROBOT EMBODIMENT STARTED.");
+
+
+    ROS_INFO("Battery and agent messages sent.");
+
+    //sleep(5.0);
+
+
+
+   // ROS_INFO("Sleeping for 5 seconds.");
+
+    ROS_INFO("ROBOT EMBODIMENT STARTED.");
+}
+
+void RobotEmbodiment::oac_loaded_callback(bool oac_loaded)
+{
+    //this->is_agent_loaded_lock.lock();
+    this->is_agent_loaded = oac_loaded;
+    //this->is_agent_loaded_lock.unlock();
+}
+
+void RobotEmbodiment::action_plan_callback(ActionPlan action_plan)
+{
+    action_plan.publish_markers();
+
+    SimpleClientGoalState plan_state = SimpleClientGoalState::SUCCEEDED;// = true;
+
+    for (int i = 0; i < action_plan.size(); i++)
+    {
+        Action action = action_plan.get_action(i);
+        SimpleClientGoalState state = this->robot->act(action);
+        //this->oac_pub->publish(OacMessage::create_action_result_msg(this->avatar_id, this->oac_id, action_plan.get_plan_id(), action.get_action_id(), action.get_type(), state));
+
+        if(state != SimpleClientGoalState::SUCCEEDED)
+        {
+            plan_state = SimpleClientGoalState::ABORTED;
+            break;
+        }
+
+        //action_plan.delete_marker(action.get_action_id());
+    }
+
+    /*for(int i = 0; i < action_plan.size(); i++)
+    {
+        Action action = action_plan.get_action(i);
+        action_plan.delete_marker(action.get_action_id());
+    }*/
+
+    this->oac_pub->publish(OacMessage::create_action_plan_result_msg(this->avatar_id, this->oac_id, action_plan.get_plan_id(), plan_state));
 }
 
 void RobotEmbodiment::update_loop()
 {
-    ROS_DEBUG("Update loop started. Sending tick and physiological messages.");
+    ROS_INFO("Update loop started. Sending tick and physiological messages.");
     ros::Rate rate(2);
 
     while(ros::ok())
     {
         this->oac_pub->publish(OacMessage::create_tick_msg(this->avatar_id, this->oac_id));
         this->oac_pub->publish(OacMessage::create_physiological_msg(this->avatar_id, this->oac_id));
+
+
         //ros::spinOnce();
         rate.sleep();
     }
 
-    ROS_DEBUG("Update loop stopped.");
+    ROS_INFO("Update loop stopped.");
 }
 
 void RobotEmbodiment::stop()
@@ -84,212 +161,37 @@ void RobotEmbodiment::stop()
     this->oac_pub->stop();
 }
 
-
 void RobotEmbodiment::wait_until_agent_loaded()
 {   
-    ROS_DEBUG("Waiting for agent to load.");
+    ROS_INFO("Waiting for agent to load.");
     ros::Rate rate(10);
 
-    while(ros::ok() && !this->is_agent_loaded)
+    while(ros::ok())
     {
+        //this->is_agent_loaded_lock.lock();
+        //loaded = this->is_agent_loaded;
+        //this->is_agent_loaded_lock.unlock();
+
+        if(this->is_agent_loaded)
+        {
+            break;
+        }
+
         ros::spinOnce();
         rate.sleep();
     }
 
-    ROS_DEBUG("Agent loaded.");
-}
-
-bool RobotEmbodiment::load_map()
-{
-    //TODO: change static_map to constant
-    this->static_map_srv = this->nh.serviceClient<nav_msgs::GetMap>("static_map");
-    bool map_available = ros::service::waitForService("static_map", RobotEmbodiment::TIMEOUT);
-
-    if(!map_available)
-    {
-        //TODO: throw error, map service not found
-        return false;
-    }
-
-    nav_msgs::GetMap srv;
-    bool map_received = this->static_map_srv.call(srv);
-
-    if(!map_received)
-    {
-        //TODO: throw error, map not received
-        return false;
-    }
-
-    this->send_occupancy_grid("ros_opencog_robot_embodiment_map", srv.response.map);
-    return true;
-}
-
-
-void RobotEmbodiment::oac_subscriber_callback(boost::shared_ptr<std::string> msg)
-{ 
-    string *msg_ptr = msg.get();
-
-    if(RobotEmbodiment::is_command(*msg_ptr))
-    {
-        string command = msg_ptr->substr(1);
-        this->process_oac_command(command);
-    }
-    else if (RobotEmbodiment::is_data(*msg_ptr))
-    {
-        string data = msg_ptr->substr(1);
-        this->current_msg << data;
-    }
-    else
-    {
-        cout << "Unknown message type\n";
-    }
-}
-
-bool RobotEmbodiment::is_command(std::string message)
-{
-    char selector = message[0];
-    if(selector == 'c')
-    {
-        return true;
-    }
-    return false;
-}
-
-bool RobotEmbodiment::is_data(std::string message)
-{
-    char selector = message[0];
-    if(selector == 'd')
-    {
-        return true;
-    }
-    return false;
-}
-
-void RobotEmbodiment::process_oac_command(std::string command)
-{
-    string temp("");
-    temp = command;
-    cout << "Command: " << "\"" << command << "\"\n";
-
-    //TODO: make commands constants
-    temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
-    std::vector<string> tokens;    
-    boost::split(tokens, temp, boost::is_any_of(" "));
-
-    string name = tokens[0];
-    if(name == "AVAILABLE_ELEMENT")
-    {
-        string id = tokens[1];
-
-        if(id == "ROUTER")
-        {
-            this->is_router_available = true;
-        }
-    }
-    else if(name == "UNAVAILABLE_ELEMENT")
-    {
-        string id = tokens[1];
-
-        if(id == "ROUTER")
-        {
-            this->is_router_available = false;
-        }
-    }
-    else if(name == "START_MESSAGE")
-    {
-        cout << "Start message\n";
-    }
-    else if(name == "NO_MORE_MESSAGES")
-    {
-        this->process_oac_message(this->current_msg.str());
-        this->current_msg.str(string());
-        cout << "Finish message\n";
-    }
-    else
-    {
-        cout << "Unsupported message\n";
-    }
-}
-
-void RobotEmbodiment::process_oac_message(string message)
-{
-    cout << "Message: \"" << message << "\"";
-
-    if(boost::starts_with(message, Commands::SUCCESS_LOAD))
-    {
-        cout << "Agent loaded.\n";
-        this->is_agent_loaded = true;
-    }
-}
-
-void RobotEmbodiment::send_occupancy_grid(std::string map_name, nav_msgs::OccupancyGrid map)
-{
-    int map_x = map.info.origin.position.x;
-    int map_y = map.info.origin.position.z;
-    int map_z = map.info.origin.position.y;
-
-    int map_width = map.info.width; //x
-    int map_length = map.info.height; //y
-    int map_height = 2;
-    int floor_height = -1;
-    int num_blocks_to_transmit = 0;
-    bool is_first_percept = true;
-
-    //std::cout << "1";
-    // Parse occupancy grid data into blocks
-    MapInfoSeq blocks;
-
-
-    for(int y = 0; y < map_length; y++)
-    {
-        for(int x = 0; x < map_width; x++)
-        {
-            int occupied_probability  = map.data[x + map_width * y];
-
-            if(occupied_probability > 68) // TODO: constant
-            {
-                //std::cout << "Cell occupied: " << occupied_probability << "\n";
-
-                MapInfo* block1 = blocks.add_mapinfos();
-                Block::set_properties(block1, x, 0, y);
-                num_blocks_to_transmit += 1;
-
-                MapInfo* block2 = blocks.add_mapinfos();
-                Block::set_properties(block2, x, 1, y);
-                num_blocks_to_transmit += 1;
-            }
-
-            if(num_blocks_to_transmit >= OacPublisher::BLOCKS_PER_TRANSMISION)
-            {
-                OacMessage map_msg = OacMessage::create_map_msg(this->avatar_id, this->oac_id, map_name, map_x, map_y, map_z, map_width, map_length, map_height, floor_height, &blocks, is_first_percept);
-                this->oac_pub->publish(map_msg);
-                blocks.clear_mapinfos();
-                num_blocks_to_transmit = 0;
-            }
-        }
-    }
-
-    //Send remaining blocks
-    if(num_blocks_to_transmit > 0)
-    {
-        OacMessage map_msg = OacMessage::create_map_msg(this->avatar_id, this->oac_id, map_name, map_x, map_y, map_z, map_width, map_length, map_height, floor_height, &blocks, is_first_percept);
-        this->oac_pub->publish(map_msg);
-    }
-
-    OacMessage map_perceived_msg = OacMessage::create_map_perceived_msg(this->avatar_id, this->oac_id);
-    this->oac_pub->publish(map_perceived_msg);
-    google::protobuf::ShutdownProtobufLibrary();
+    ROS_INFO("Agent loaded.");
 }
 
 RobotEmbodiment::~RobotEmbodiment()
 {
     this->stop();
+    delete this->oac_sub;
+    delete this->oac_pub;
+    delete this->robot;
+    delete this->map;
 }
-
-//bool RobotEmbodiment::set_param(ros::NodeHandle nh, string param_id, stromg )
-//{
-
-//}
 
 int main(int argc, char** argv)
 {
@@ -297,7 +199,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "ros_opencog_robot_embodiment");
     ros::NodeHandle rel_nh("~");
 
-    if(ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+    if(ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
     {
        ros::console::notifyLoggerLevelsChanged();
     }
@@ -316,7 +218,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        ROS_DEBUG("Please specify a base_agent_id in the launch file");
+        ROS_INFO("Please specify a base_agent_id in the launch file");
         return 0;
     }
 
@@ -326,7 +228,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        ROS_DEBUG("Please specify a oac_ip_address in the launch file");
+        ROS_INFO("Please specify a oac_ip_address in the launch file");
         return 0;
     }
 
@@ -336,7 +238,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        ROS_DEBUG("Please specify a oac_port in the launch file");
+        ROS_INFO("Please specify a oac_port in the launch file");
         return 0;
     }
 
@@ -346,7 +248,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        ROS_DEBUG("Please specify a oac_port in the launch file");
+        ROS_INFO("Please specify a oac_port in the launch file");
         return 0;
     }
 
@@ -356,7 +258,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        ROS_DEBUG("Please specify a oac_port in the launch file");
+        ROS_INFO("Please specify a oac_port in the launch file");
         return 0;
     }
 
@@ -365,26 +267,7 @@ int main(int argc, char** argv)
     RobotEmbodiment robot_embodiment(base_agent_id, oac_ip_address, oac_port, local_ip_address, local_port);
     robot_embodiment.start();
     ros::spin();
+    //google::protobuf::ShutdownProtobufLibrary();
 }
 
 
-/*
- *
- *
- *
- *
- *
- *
- *
-void RobotEmbodiment::logout_of_router()
-{
-    OacMessage oac_logout_msg = OacMessage::create_oac_logout_msg(this->avatar_id);
-    this->oac_pub->publish(oac_logout_msg);
-}
-
-void RobotEmbodiment::unload_agent()
-{
-    OacMessage unload_agent_msg = OacMessage::create_unload_agent_msg(this->avatar_id, this->oac_id, "SPAWNER");
-    this->oac_pub->publish(unload_agent_msg);
-}
-*/

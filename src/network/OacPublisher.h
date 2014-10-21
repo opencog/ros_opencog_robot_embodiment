@@ -9,7 +9,7 @@
 #include <fstream>
 #include <ros/package.h>
 
-#include "Constants.h"
+#include "../Constants.h"
 #include "OacMessage.h"
 #include <algorithm>
 
@@ -36,7 +36,6 @@ namespace ros_opencog_robot_embodiment
             void send_finished(boost::shared_ptr<std::string> content);
 
         public:
-            static const int BLOCKS_PER_TRANSMISION = 100;
             OacPublisher(std::string oac_ip_address, int oac_port);
             ~OacPublisher();
             void start();

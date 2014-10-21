@@ -18,37 +18,37 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-rosbuild_genmsg()
+#rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 
-#include(${PROJECT_SOURCE_DIR}/FindXercesC.cmake)
-#find_package(XercesC)
-link_directories(/usr/lib)
-include_directories(/usr/include/xercesc)
-
-
+include(${PROJECT_SOURCE_DIR}/FindXercesC.cmake)
+find_package(XercesC)
+link_directories(${XERCESC_LIBRARIES})
+include_directories(${XERCESC_INCLUDE})
 
 rosbuild_add_boost_directories()
-#find_package(Protobuf REQUIRED)
 rosbuild_add_executable(robot_embodiment 
-						src/opencog_msgs.pai_msgs.pb.cc
+						src/msgs/opencog_msgs.pai_msgs.pb.cc
 						src/RobotEmbodiment.cpp
-						src/OacPublisher.cpp
-						src/OacSubscriber.cpp
-						src/OacMessage.cpp
-						src/Block.cpp
-						src/Constants.cpp)
+						src/Constants.cpp
+						src/actions/Action.cpp
+						src/actions/ActionPlan.cpp
+						src/actions/NavigateTo.cpp
+						src/actions/Pickup.cpp
+						src/actions/Eat.cpp						
+						src/entities/Robot.cpp						
+						src/network/OacPublisher.cpp
+						src/network/OacSubscriber.cpp
+                                                src/network/OacMessage.cpp
+                                                src/entities/Map.cpp
+                                                src/Util.cpp
+						)
 						
 rosbuild_link_boost(robot_embodiment thread system)
+target_link_libraries(robot_embodiment protobuf xerces-c)
 
-set_target_properties(robot_embodiment -lxerces-c)
-target_link_libraries(robot_embodiment protobuf libxerces28 libxerces-c)
-
-#libxerces-c
-#rosbuild_add_executable(people_detector src/people_detector.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
 
