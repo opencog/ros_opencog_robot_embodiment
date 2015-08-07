@@ -1,0 +1,2 @@
+string nick
+string message
